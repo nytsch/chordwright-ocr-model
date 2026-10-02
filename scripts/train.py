@@ -56,6 +56,7 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="nur so viele Trainingsbilder (zum Ausprobieren)")
     parser.add_argument("--threads", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--init", type=Path, default=None, help="Gewichte eines trainierten Modells als Start (Nachtraining)")
     args = parser.parse_args()
 
     if args.threads:
@@ -66,6 +67,9 @@ def main() -> None:
     print(f"{len(labels)} Trainings-, {len(val_labels)} Prüfbilder, {torch.get_num_threads()} Threads", flush=True)
 
     model = ChordNet()
+    if args.init:
+        state = torch.load(args.init, weights_only=False)
+        model.load_state_dict(state["model"] if "model" in state else state)
     print(f"{sum(p.numel() for p in model.parameters()):,} Parameter", flush=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     steps_per_epoch = (len(labels) + args.batch - 1) // args.batch

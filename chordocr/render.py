@@ -42,6 +42,18 @@ SMUFL_SHARP, SMUFL_FLAT = "", ""
 SEGNO, CODA = "", ""
 QUARTER = ""
 
+# Liedtext aus dem System darüber gerät in den Streifen, in dem die App Akkorde
+# sucht: Silben, Wörter, einzelne Kleinbuchstaben. Keine großen A–G allein —
+# „A" als Wort ist vom Akkord A nicht zu unterscheiden.
+LYRIC_WORDS = (
+    "light of the world you stepped down into darkness opened my eyes let me see here i am to worship "
+    "bow down say that you're my god altogether lovely wonderful and holy grace amazing sweet sound "
+    "herr dein wort ist ein licht auf meinem weg ich will dich loben singen danken jesus du bist heilig "
+    "und der name des herrn sei gelobt in ewigkeit halleluja amen o oh ah la "
+    "King Lord Holy Name Jesus Herr Gott Dein Ich Du Wir Halleluja Light Grace Hosanna Glory"
+).split()
+LYRIC_PIECES = ["-", "—", ",", "o", "a", "e", "i", "u", "ness", "ing", "ver", "lich", "ten", "ge-"]
+
 NEGATIVE_WORDS = [
     "N.C.", "To Coda", "D.S. al Coda", "D.C. al Fine", "Fine", "x2", "2x", "(x3)", "1.", "2.", "3.",
     "rit.", "a tempo", "Intro", "Coda", "mf", "Vamp", "Tag", "Last time", "%", "|", "Fill", "Gtr.",
@@ -83,7 +95,7 @@ def _is_variable(path: Path) -> bool:
 
 
 class Renderer:
-    def __init__(self, split: str = "train", negative_rate: float = 0.1):
+    def __init__(self, split: str = "train", negative_rate: float = 0.14):
         self.text_fonts, self.music_fonts = load_catalogue(split)
         self.negative_rate = negative_rate
         self._cache: dict[tuple[Path, int], ImageFont.FreeTypeFont] = {}
@@ -231,7 +243,15 @@ class Renderer:
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=0)
 
     def _negative(self, rng: random.Random, draw: ImageDraw.ImageDraw, x: float, baseline: int, size: int) -> None:
-        kind = rng.choices(["sign", "word", "tempo", "key", "stem"], weights=[3, 5, 1, 4, 2])[0]
+        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric"], weights=[3, 5, 1, 4, 2, 7])[0]
+        if kind == "lyric":
+            font = rng.choice(self.text_fonts)
+            face = self._font(font, round(size * rng.uniform(0.8, 1.1)), rng.random() if font.axes else None)
+            text = rng.choice(LYRIC_WORDS) if rng.random() < 0.7 else rng.choice(LYRIC_PIECES)
+            if rng.random() < 0.2:
+                text += rng.choice(["-", ",", ".", " -"])
+            draw.text((x, baseline), text, font=face, fill=0, anchor="ls")
+            return
         if kind == "key":
             # Die Spitze einer Vorzeichnung: ♯/♭ im Zickzack, unten abgeschnitten —
             # so ragt sie aus dem System in den Streifen, in dem die App Akkorde sucht.
