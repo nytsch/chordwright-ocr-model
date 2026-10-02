@@ -13,8 +13,9 @@ Die App pinnt dieses Repo per Commit, wie den Datenserver.
 | Phase | | Stand |
 |---|---|---|
 | 2 | Synthetische Trainingsdaten | **steht** — `scripts/generate.py` |
-| 3 | CRNN + CTC, Training auf der CPU | offen |
-| 3 | Export für den Browser (≤ 2–5 MB, iPhone 12) | offen |
+| 3 | Faltungsnetz + CTC, Training auf der CPU | **steht** — `scripts/train.py` |
+| 3 | Export für den Browser (≤ 2–5 MB, iPhone 12) | **steht** — `scripts/export.py`, ~0,6 MB |
+| 3 | Nachbau in der App (TypeScript) | offen |
 
 ## Einrichten
 
@@ -53,6 +54,32 @@ und `labels` (leer = kein Akkord). Gleicher Seed, gleiche Daten.
   nur in die Prüfmenge — so zeigt sich, ob das Modell auf fremde Schriften
   verallgemeinert. Echte Blätter aus dem Korpus der App prüfen zusätzlich, sie
   werden nicht zum Training benutzt.
+
+## Trainieren, prüfen, exportieren
+
+```sh
+.venv/bin/python scripts/train.py --epochs 12 --out runs/base          # CPU, Abbrechen + --resume geht
+.venv/bin/python scripts/evaluate.py runs/base/best.pt                   # wie die App: Strahlsuche + Grammatik
+.venv/bin/python scripts/export.py runs/base/best.pt --out chordnet.bin  # Datei für die App, gegen PyTorch geprüft
+.venv/bin/python scripts/evaluate.py chordnet.bin                        # dieselbe Prüfung mit der NumPy-Referenz
+```
+
+**Modell** (`chordocr/model.py`): fünf 3×3-Faltungen mit Max-Pooling, eine
+Faltung, die die Höhe auflöst, drei gedehnte 1D-Faltungen mit Restverbindung,
+eine 1×1-Faltung auf 34 Klassen (33 Zeichen + Leer), 48 Zeitschritte. Rund
+290.000 Gewichte, als float16 knapp 0,6 MB. Bewusst ohne LSTM: nur Faltung,
+ReLU, Pooling, Addition — das lässt sich in der App in wenigen Zeilen
+TypeScript nachbauen, ohne Laufzeit-Paket (onnxruntime-web allein wäre größer
+als das Budget).
+
+**Lesen** (`chordocr/decode.py`): CTC-Strahlsuche, dann der wahrscheinlichste
+Kandidat, der ein gültiger Akkord ist — oder „kein Akkord". Die Sicherheit
+geht später an die Prüfansicht.
+
+**Datei** (`chordocr/export.py`): `chordnet.bin` = Kennung, JSON-Kopf mit den
+Schichten (BatchNorm eingerechnet), float16-Gewichte. `chordocr/infer_numpy.py`
+rechnet sie nur mit NumPy — die Referenz, an der der TypeScript-Nachbau
+gemessen wird.
 
 ### Vertrag mit der App
 

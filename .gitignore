@@ -5,3 +5,5 @@ __pycache__/
 fonts/
 data/
 preview*.png
+runs/
+*.log
