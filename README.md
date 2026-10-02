@@ -15,7 +15,7 @@ Die App pinnt dieses Repo per Commit, wie den Datenserver.
 | 2 | Synthetische Trainingsdaten | **steht** — `scripts/generate.py` |
 | 3 | Faltungsnetz + CTC, Training auf der CPU | **steht** — `scripts/train.py` |
 | 3 | Export für den Browser (≤ 2–5 MB, iPhone 12) | **steht** — `scripts/export.py`, ~0,6 MB |
-| 3 | Nachbau in der App (TypeScript) | offen |
+| 3 | Nachbau in der App (TypeScript) | **steht** — `app/src/domain/chordNet.ts`, gleiche Werte wie die NumPy-Referenz |
 
 ## Einrichten
 
@@ -87,6 +87,23 @@ gemessen wird.
 32 px Höhe skaliert (Seitenverhältnis bleibt), links bündig auf Weiß bis
 192 px, breitere gestaucht. Die App muss genau das vor dem Modell nachbauen.
 Handschrift ist bewusst nicht dabei.
+
+## Stand des Modells (`release/chordnet.bin`)
+
+Die App pinnt diese Datei per Commit und Prüfsumme (`chordwrightOcrModel` in
+`app/package.json`). Gemessen auf 5.000 Prüfbildern in Schriften, die das
+Training nie gesehen hat (`scripts/evaluate.py`):
+
+| | |
+|---|---|
+| Akkorde richtig | 99,2 % |
+| davon mit ♯/♭ am Grundton | 98,6 % |
+| „kein Akkord" richtig erkannt | 99,7 % |
+
+Trainiert: 8 Epochen auf 200.000 Bildern, dann zweimal je 3 Epochen
+nachtrainiert (`--init`) mit neuen Nicht-Akkorden (Liedtext, Vorzeichnungen,
+Schlüsselenden), je ~7,5 min/Epoche auf 4 CPU-Kernen. **Synthetische Zahlen** —
+was zählt, misst `npm run ocr:bench` in der App an echten Blättern.
 
 ## Lizenzen
 

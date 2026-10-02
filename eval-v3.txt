@@ -1,0 +1,20 @@
+Gesamt richtig:        99.22 %  (5000 Bilder)
+Akkorde richtig:       99.15 %
+  mit ♯/♭ am Grundton: 98.57 %
+Kein Akkord erkannt:   99.68 %
+Häufigste Fehler (soll → gelesen):
+           G#7 → G#           1
+            D# → F#           1
+         Gbsus → Gbm          1
+     C#m(add9) → ∅            1
+            A9 → A            1
+            E4 → E            1
+           Eb6 → Eb5          1
+            C9 → C            1
+             ∅ → D            1
+            Fm → Em           1
+           Dm7 → Dm           1
+        AM7/A# → A#97/A#      1
+             ∅ → G            1
+          Ebm7 → Fbm7         1
+            G9 → G6           1
