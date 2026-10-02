@@ -41,6 +41,7 @@ SHARP, FLAT = "♯", "♭"
 SMUFL_SHARP, SMUFL_FLAT = "", ""
 SEGNO, CODA = "", ""
 QUARTER = ""
+G_CLEF, F_CLEF = "\ue050", "\ue062"
 
 # Liedtext aus dem System darüber gerät in den Streifen, in dem die App Akkorde
 # sucht: Silben, Wörter, einzelne Kleinbuchstaben. Keine großen A–G allein —
@@ -243,7 +244,21 @@ class Renderer:
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=0)
 
     def _negative(self, rng: random.Random, draw: ImageDraw.ImageDraw, x: float, baseline: int, size: int) -> None:
-        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric"], weights=[3, 5, 1, 4, 2, 7])[0]
+        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric", "clef"], weights=[3, 5, 1, 4, 2, 7, 3])[0]
+        if kind == "clef":
+            # Das obere oder untere Ende eines Schlüssels — der Violinschlüssel
+            # ragt über und unter sein System hinaus, in die Streifen der Nachbarn.
+            glyph = rng.choice([G_CLEF, G_CLEF, F_CLEF])
+            fonts = [f for f in self.music_fonts if f.has(glyph)] or self.music_fonts
+            face = self._font(rng.choice(fonts), round(size * rng.uniform(1.6, 2.6)))
+            draw.text((x, baseline), glyph, font=face, fill=0, anchor="ls")
+            top, bottom = baseline - size * 3, baseline + size * 2
+            cut = baseline - size * rng.uniform(0.3, 1.6)
+            if rng.random() < 0.5:
+                draw.rectangle([0, cut, x + size * 3, bottom], fill=255)  # nur die Spitze
+            else:
+                draw.rectangle([0, top, x + size * 3, cut + size * 0.6], fill=255)  # nur der Fuß
+            return
         if kind == "lyric":
             font = rng.choice(self.text_fonts)
             face = self._font(font, round(size * rng.uniform(0.8, 1.1)), rng.random() if font.axes else None)
