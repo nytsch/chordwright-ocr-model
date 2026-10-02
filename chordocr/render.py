@@ -83,7 +83,7 @@ def _is_variable(path: Path) -> bool:
 
 
 class Renderer:
-    def __init__(self, split: str = "train", negative_rate: float = 0.06):
+    def __init__(self, split: str = "train", negative_rate: float = 0.1):
         self.text_fonts, self.music_fonts = load_catalogue(split)
         self.negative_rate = negative_rate
         self._cache: dict[tuple[Path, int], ImageFont.FreeTypeFont] = {}
@@ -231,8 +231,23 @@ class Renderer:
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=0)
 
     def _negative(self, rng: random.Random, draw: ImageDraw.ImageDraw, x: float, baseline: int, size: int) -> None:
-        kind = rng.choices(["sign", "word", "tempo"], weights=[3, 5, 1])[0]
-        if kind == "sign":
+        kind = rng.choices(["sign", "word", "tempo", "key", "stem"], weights=[3, 5, 1, 4, 2])[0]
+        if kind == "key":
+            # Die Spitze einer Vorzeichnung: ♯/♭ im Zickzack, unten abgeschnitten —
+            # so ragt sie aus dem System in den Streifen, in dem die App Akkorde sucht.
+            face = self._font(rng.choice(self.music_fonts), round(size * rng.uniform(1.4, 2.2)))
+            glyph = rng.choice([SMUFL_SHARP, SMUFL_FLAT])
+            step = face.getlength(glyph) * rng.uniform(0.9, 1.2)
+            for i in range(rng.randint(1, 4)):
+                draw.text((x + i * step, baseline + (size * 0.35 if i % 2 else 0)), glyph, font=face, fill=0, anchor="ls")
+            cut = baseline - size * rng.uniform(-0.2, 0.9)
+            draw.rectangle([0, cut, x + 6 * step + size, cut + size * 4], fill=255)
+        elif kind == "stem":
+            width = max(2, round(size * rng.uniform(0.04, 0.1)))
+            draw.rectangle([x, baseline - size * rng.uniform(0.4, 1.4), x + width, baseline], fill=0)
+            if rng.random() < 0.5:  # mit Fähnchen
+                draw.polygon([(x + width, baseline - size), (x + width + size * 0.5, baseline - size * 0.5), (x + width, baseline - size * 0.7)], fill=0)
+        elif kind == "sign":
             face = self._font(rng.choice(self.music_fonts), round(size * rng.uniform(1.0, 1.8)))
             draw.text((x, baseline), rng.choice([SEGNO, CODA]), font=face, fill=0, anchor="ls")
         elif kind == "word":
