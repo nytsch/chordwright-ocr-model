@@ -7,3 +7,4 @@ data/
 preview*.png
 runs/
 *.log
+eval-*.txt

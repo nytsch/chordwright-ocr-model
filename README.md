@@ -113,5 +113,15 @@ Blättern gezeigt hat: Liedtext, Vorzeichnungen, Schlüsselenden, Taktzahlen
 
 ## Lizenzen
 
-Code: MIT. Schriften: SIL Open Font License, sie liegen nicht im Repo, sondern
-werden von `fetch_fonts.py` aus den Quellen in `fonts.json` geholt.
+- **Code und Modell** (`release/chordnet.bin`): MIT, © 2026 Niko Krämer — siehe
+  `LICENSE`. Die App führt das Modell in ihrer `NOTICE`.
+- **Trainingsdaten:** ausschließlich künstlich erzeugt (`scripts/generate.py`).
+  Keine echten Notenblätter, keine Liedtexte aus Liederbüchern — der Korpus
+  echter Blätter (privat) dient nur zum Prüfen und ist nie ins Training gegangen.
+- **Schriften:** alle unter der SIL Open Font License 1.1 (Bravura, Petaluma,
+  Leland, Edwin, MuseJazz, Google Fonts — Quellen in `fonts.json`). Sie liegen
+  nicht im Repo, `fetch_fonts.py` holt sie. Die OFL erlaubt, mit den Schriften
+  Bilder zu setzen; die Bilder und das daraus gelernte Modell sind keine
+  Schriftsoftware und fallen nicht unter die OFL.
+- **Werkzeuge zum Trainieren** (nicht Teil des Modells): NumPy, PyTorch (BSD),
+  Pillow (HPND), fontTools (MIT).
