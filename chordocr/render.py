@@ -244,7 +244,36 @@ class Renderer:
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=0)
 
     def _negative(self, rng: random.Random, draw: ImageDraw.ImageDraw, x: float, baseline: int, size: int) -> None:
-        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric", "clef", "bar"], weights=[3, 5, 1, 4, 2, 7, 3, 6])[0]
+        kind = rng.choices(
+            ["sign", "word", "tempo", "key", "stem", "lyric", "clef", "bar", "barclef", "section"],
+            weights=[3, 5, 1, 4, 2, 7, 3, 6, 6, 5],
+        )[0]
+        if kind == "barclef":
+            # Taktzahl über der Spitze des Violinschlüssels: am Systemanfang wächst
+            # der Kasten der App bis an die Notenlinie und fasst beides.
+            fonts = [f for f in self.music_fonts if f.has(G_CLEF)] or self.music_fonts
+            clef = self._font(rng.choice(fonts), round(size * rng.uniform(1.8, 2.8)))
+            draw.text((x, baseline + size * rng.uniform(1.4, 2.4)), G_CLEF, font=clef, fill=0, anchor="ls")
+            draw.rectangle([0, baseline + size * rng.uniform(0.5, 1.2), x + size * 4, baseline + size * 6], fill=255)
+            font = rng.choice(self.text_fonts)
+            face = self._font(font, round(size * rng.uniform(0.5, 0.85)), rng.random() if font.axes else None)
+            draw.text((x + size * rng.uniform(-0.2, 0.3), baseline - size * rng.uniform(0.6, 1.2)), str(rng.randint(2, 99)), font=face, fill=0, anchor="ls")
+            return
+        if kind == "section":
+            # Abschnitts-Kästchen, gerahmt — manchmal mit einer Taktzahl davor.
+            font = rng.choice(self.text_fonts)
+            face = self._font(font, round(size * rng.uniform(0.7, 1.0)), rng.random() if font.axes else None)
+            word = rng.choice(["VERS", "VERSE", "VERSE 1", "CHORUS", "BRIDGE", "INTRO", "OUTRO", "STROPHE", "REFRAIN", "PRE-CHORUS", "TAG", "ENDING", "INSTRUMENTAL", "Bridge", "Chorus"])
+            left = x + (size * 0.9 if rng.random() < 0.4 else 0)
+            if left > x:
+                small = self._font(font, round(size * 0.6))
+                draw.text((x, baseline - size * 0.7), str(rng.randint(2, 60)), font=small, fill=0, anchor="ls")
+            width = face.getlength(word)
+            pad = size * rng.uniform(0.1, 0.3)
+            line = max(1, round(size * rng.uniform(0.03, 0.08)))
+            draw.text((left + pad, baseline), word, font=face, fill=0, anchor="ls")
+            draw.rectangle([left, baseline - size * 0.85 - pad, left + width + 2 * pad, baseline + pad], outline=0, width=line)
+            return
         if kind == "bar":
             # Taktzahl über dem Systemanfang — auf fast jedem Leadsheet, oft kursiv und klein.
             font = rng.choice(self.text_fonts)
