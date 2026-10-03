@@ -56,7 +56,7 @@ LYRIC_WORDS = (
 LYRIC_PIECES = ["-", "—", ",", "o", "a", "e", "i", "u", "ness", "ing", "ver", "lich", "ten", "ge-"]
 
 NEGATIVE_WORDS = [
-    "N.C.", "To Coda", "D.S. al Coda", "D.C. al Fine", "Fine", "x2", "2x", "(x3)", "1.", "2.", "3.",
+    "N.C.", "To Coda", "D.S. al Coda", "D.S.", "D.C.", "D. S.", "D.C. al Coda", "D.C. al Fine", "Fine", "x2", "2x", "(x3)", "1.", "2.", "3.",
     "rit.", "a tempo", "Intro", "Coda", "mf", "Vamp", "Tag", "Last time", "%", "|", "Fill", "Gtr.",
 ]
 
@@ -244,7 +244,13 @@ class Renderer:
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=0)
 
     def _negative(self, rng: random.Random, draw: ImageDraw.ImageDraw, x: float, baseline: int, size: int) -> None:
-        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric", "clef"], weights=[3, 5, 1, 4, 2, 7, 3])[0]
+        kind = rng.choices(["sign", "word", "tempo", "key", "stem", "lyric", "clef", "bar"], weights=[3, 5, 1, 4, 2, 7, 3, 6])[0]
+        if kind == "bar":
+            # Taktzahl über dem Systemanfang — auf fast jedem Leadsheet, oft kursiv und klein.
+            font = rng.choice(self.text_fonts)
+            face = self._font(font, round(size * rng.uniform(0.55, 1.0)), rng.random() if font.axes else None)
+            draw.text((x, baseline), str(rng.choice([rng.randint(2, 9), rng.randint(10, 99), rng.randint(100, 180)])), font=face, fill=0, anchor="ls")
+            return
         if kind == "clef":
             # Das obere oder untere Ende eines Schlüssels — der Violinschlüssel
             # ragt über und unter sein System hinaus, in die Streifen der Nachbarn.
