@@ -91,19 +91,25 @@ Handschrift ist bewusst nicht dabei.
 ## Stand des Modells (`release/chordnet.bin`)
 
 Die App pinnt diese Datei per Commit und Prüfsumme (`chordwrightOcrModel` in
-`app/package.json`). Gemessen auf 5.000 Prüfbildern in Schriften, die das
-Training nie gesehen hat (`scripts/evaluate.py`):
+`app/package.json`).
 
-| | |
-|---|---|
-| Akkorde richtig | 99,2 % |
-| davon mit ♯/♭ am Grundton | 98,6 % |
-| „kein Akkord" richtig erkannt | 99,7 % |
+**Echte Blätter** (39 Leadsheets aus `nytsch/chordwright-corpus`, 2.076 Akkorde,
+je Symbol an seiner Stelle geprüft, `npm run ocr:bench` in der App):
 
-Trainiert: 8 Epochen auf 200.000 Bildern, dann zweimal je 3 Epochen
-nachtrainiert (`--init`) mit neuen Nicht-Akkorden (Liedtext, Vorzeichnungen,
-Schlüsselenden), je ~7,5 min/Epoche auf 4 CPU-Kernen. **Synthetische Zahlen** —
-was zählt, misst `npm run ocr:bench` in der App an echten Blättern.
+| | Modell (v5) | Tesseract |
+|---|---|---|
+| richtig | **94,7 %** | 87,2 % |
+| falsch gelesen | 17 | 50 |
+| nicht gefunden | 94 | 216 |
+| zu viel (kein Akkord) | 127 | 62 |
+
+**Synthetisch**, Schriften, die das Training nie sah (`scripts/evaluate.py`):
+99,3 % Akkorde, 99,0 % mit ♯/♭, 99,5 % Nicht-Akkorde erkannt.
+
+Trainiert: 8 Epochen auf 200.000 Bildern, dann viermal je 3 Epochen
+nachtrainiert (`--init`), jedes Mal mit Nicht-Akkorden, die das Messen an echten
+Blättern gezeigt hat: Liedtext, Vorzeichnungen, Schlüsselenden, Taktzahlen
+(auch über der Schlüsselspitze), gerahmte Abschnitts-Kästchen.
 
 ## Lizenzen
 
