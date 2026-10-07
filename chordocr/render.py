@@ -212,9 +212,11 @@ class Renderer:
         if bass:
             scale = 0.75 if small_bass else 1.0
             text("/", scale)
-            text(bass[1], scale)
-            if len(bass) > 2:
+            if bass[-1] in "#b" and len(bass) == 3:
+                text(bass[1], scale)
                 accidental(bass[2], scale)
+            else:
+                text(bass[1:], scale)
         return x
 
     def _clutter(self, rng: random.Random, draw: ImageDraw.ImageDraw, x0: float, x1: float, baseline: int, size: int) -> None:
