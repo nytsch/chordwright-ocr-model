@@ -20,6 +20,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chordocr.data import batch_targets, load, to_input  # noqa: E402
 from chordocr.decode import greedy  # noqa: E402
+from chordocr.export import load_bin  # noqa: E402
 from chordocr.model import STEPS, ChordNet  # noqa: E402
 
 
@@ -56,7 +57,8 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="nur so viele Trainingsbilder (zum Ausprobieren)")
     parser.add_argument("--threads", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--init", type=Path, default=None, help="Gewichte eines trainierten Modells als Start (Nachtraining)")
+    parser.add_argument("--init", type=Path, default=None, help="Gewichte eines trainierten Modells als Start (Nachtraining); auch eine exportierte chordnet.bin")
+    parser.add_argument("--freeze-norm", action="store_true", help="BatchNorm-Statistik nicht mehr anpassen (immer bei --init *.bin)")
     args = parser.parse_args()
 
     if args.threads:
@@ -67,7 +69,10 @@ def main() -> None:
     print(f"{len(labels)} Trainings-, {len(val_labels)} Prüfbilder, {torch.get_num_threads()} Threads", flush=True)
 
     model = ChordNet()
-    if args.init:
+    if args.init and args.init.suffix == ".bin":
+        model = load_bin(args.init)
+        args.freeze_norm = True
+    elif args.init:
         state = torch.load(args.init, weights_only=False)
         model.load_state_dict(state["model"] if "model" in state else state)
     print(f"{sum(p.numel() for p in model.parameters()):,} Parameter", flush=True)
@@ -87,6 +92,10 @@ def main() -> None:
     rng = np.random.default_rng(0)
     for epoch in range(start_epoch, args.epochs):
         model.train()
+        if args.freeze_norm:
+            for m in model.modules():
+                if isinstance(m, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
+                    m.eval()
         order = rng.permutation(len(labels))
         started, total = time.time(), 0.0
         for step, begin in enumerate(range(0, len(order), args.batch)):

@@ -12,13 +12,16 @@ import random
 import re
 
 # Wörtlich aus app/src/domain/ocrChord.ts (Stand Oktober 2026).
+# Ein Ton, englisch (F#, Bb) oder deutsch gesetzt (Fis, Es, H) — DMMK und andere
+# deutsche Verlage schreiben „Hm" und „D/Fis".
+NOTE = r"(?:[A-G][#b]?|H|[CDFGA]is|Des|Es|Ges|As)"
 CHORD_SYMBOL = re.compile(
-    r"^[A-G][#b]?(?:(?:maj|min|dim|aug|sus|add|no|m|M)[0-9]*|[0-9]+|[#b][0-9]+)*(?:\([a-z0-9#b]+\))?(?:\/[A-G][#b]?)?$"
+    rf"^{NOTE}(?:(?:maj|min|dim|aug|sus|add|no|m|M)[0-9]*|[0-9]+|[#b][0-9]+)*(?:\([a-z0-9#b]+\))?(?:\/{NOTE})?$"
 )
 
 # Alles, was in einer Beschriftung vorkommen kann. Index 0 ist im Modell das
 # CTC-Leerzeichen; die Zeichen beginnen bei 1.
-CHARSET = "ABCDEFGMabdgijmnosu#/()0123456789"
+CHARSET = "ABCDEFGHMabdegijmnosu#/()0123456789"
 
 
 def is_chord_symbol(text: str) -> bool:
@@ -51,16 +54,23 @@ def _note(rng: random.Random) -> str:
             return root + accidental
 
 
+# Deutsch gesetzt: H statt B, B statt Bb, -is/-es statt #/b.
+GERMAN = {"B": "H", "Bb": "B", "C#": "Cis", "D#": "Dis", "F#": "Fis", "G#": "Gis", "A#": "Ais",
+          "Db": "Des", "Eb": "Es", "Gb": "Ges", "Ab": "As"}
+GERMAN_RATE = 0.12
+
+
 def sample_chord(rng: random.Random) -> str:
     """Ein Akkord, so wie er gedruckt steht."""
-    chord = _note(rng) + rng.choices(_SUFFIX_TEXT, weights=_SUFFIX_WEIGHT)[0]
-    if rng.random() < 0.15:
-        chord += "/" + _note(rng)
-    return chord
+    root, bass = _note(rng), _note(rng) if rng.random() < 0.15 else None
+    if rng.random() < GERMAN_RATE:
+        root, bass = GERMAN.get(root, root), bass and GERMAN.get(bass, bass)
+    chord = root + rng.choices(_SUFFIX_TEXT, weights=_SUFFIX_WEIGHT)[0]
+    return chord + "/" + bass if bass else chord
 
 
 def split_chord(chord: str) -> tuple[str, str, str, str]:
     """Grundton, Vorzeichen, Rest, Bass (mit Schrägstrich) — der Renderer setzt sie verschieden."""
-    m = re.match(r"^([A-G])([#b]?)(.*?)((?:/[A-G][#b]?)?)$", chord)
+    m = re.match(r"^(H|[CDFGA]is|Des|Ges|(?:Es|As)(?!us)|[A-G])([#b]?)(.*?)((?:/(?:H|[CDFGA]is|Des|Es|Ges|As|[A-G][#b]?))?)$", chord)
     assert m, chord
     return m.group(1), m.group(2), m.group(3), m.group(4)

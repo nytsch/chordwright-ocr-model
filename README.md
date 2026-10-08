@@ -66,7 +66,7 @@ und `labels` (leer = kein Akkord). Gleicher Seed, gleiche Daten.
 
 **Modell** (`chordocr/model.py`): fünf 3×3-Faltungen mit Max-Pooling, eine
 Faltung, die die Höhe auflöst, drei gedehnte 1D-Faltungen mit Restverbindung,
-eine 1×1-Faltung auf 34 Klassen (33 Zeichen + Leer), 48 Zeitschritte. Rund
+eine 1×1-Faltung auf 36 Klassen (35 Zeichen + Leer), 48 Zeitschritte. Rund
 290.000 Gewichte, als float16 knapp 0,6 MB. Bewusst ohne LSTM: nur Faltung,
 ReLU, Pooling, Addition — das lässt sich in der App in wenigen Zeilen
 TypeScript nachbauen, ohne Laufzeit-Paket (onnxruntime-web allein wäre größer
@@ -93,23 +93,32 @@ Handschrift ist bewusst nicht dabei.
 Die App pinnt diese Datei per Commit und Prüfsumme (`chordwrightOcrModel` in
 `app/package.json`).
 
-**Echte Blätter** (39 Leadsheets aus `nytsch/chordwright-corpus`, 2.076 Akkorde,
-je Symbol an seiner Stelle geprüft, `npm run ocr:bench` in der App):
+**Echte Blätter** (40 Leadsheets aus `nytsch/chordwright-corpus`, rund 2.180
+Akkorde, je Symbol an seiner Stelle geprüft, `npm run ocr:bench` in der App, an
+demselben Stand der App gemessen):
 
-| | Modell (v5) | Tesseract |
+| | Modell (v6) | Modell (v5) |
 |---|---|---|
-| richtig | **94,7 %** | 87,2 % |
-| falsch gelesen | 17 | 50 |
-| nicht gefunden | 94 | 216 |
-| zu viel (kein Akkord) | 127 | 62 |
+| richtig | **94,6 %** | 94,4 % |
+| falsch gelesen | 10 | 20 |
+| nicht gefunden | 109 | 100 |
+| zu viel (kein Akkord) | 34 | 32 |
+
+v5 las deutsch gesetzte Akkorde (`Hm`, `D/Fis`) gar nicht; v6 liest sie (Vater
+unser von DMMK: 25 von 25). Die App nimmt ein alleinstehendes `H` nur auf einem
+Blatt, das auch sonst deutsch setzt — sonst ist es ein Strich, den das Modell
+für den Buchstaben hielt.
 
 **Synthetisch**, Schriften, die das Training nie sah (`scripts/evaluate.py`):
-99,3 % Akkorde, 99,0 % mit ♯/♭, 99,5 % Nicht-Akkorde erkannt.
+99,2 % Akkorde, 98,9 % mit ♯/♭, 99,4 % Nicht-Akkorde erkannt.
 
 Trainiert: 8 Epochen auf 200.000 Bildern, dann viermal je 3 Epochen
 nachtrainiert (`--init`), jedes Mal mit Nicht-Akkorden, die das Messen an echten
 Blättern gezeigt hat: Liedtext, Vorzeichnungen, Schlüsselenden, Taktzahlen
-(auch über der Schlüsselspitze), gerahmte Abschnitts-Kästchen.
+(auch über der Schlüsselspitze), gerahmte Abschnitts-Kästchen. v6: aus der
+v5-Datei (`--init release/chordnet.bin`, BatchNorm eingefroren) 4 Epochen auf
+150.000 Bildern, davon 12 % deutsch gesetzt (`H`, `Fis`, `Es` …), Zeichensatz
+um `H` und `e` erweitert.
 
 ## Lizenzen
 

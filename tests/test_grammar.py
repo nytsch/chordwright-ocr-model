@@ -12,11 +12,15 @@ def test_every_sampled_chord_is_one_the_app_accepts():
 
 
 def test_split_keeps_every_character():
-    for chord in ["F#m7", "Bb/D", "A2(no3)", "C", "Ebmaj7/G"]:
+    for chord in ["F#m7", "Bb/D", "A2(no3)", "C", "Ebmaj7/G", "Hm", "D/Fis", "Esmaj7/B", "Asus4"]:
         assert "".join(split_chord(chord)) == chord
 
 
 def test_app_grammar():
     assert is_chord_symbol("F#m7b5/E")
     assert not is_chord_symbol("AmiG")
-    assert not is_chord_symbol("H7")
+    assert is_chord_symbol("H7")
+    assert is_chord_symbol("Hm")
+    assert is_chord_symbol("D/Fis")
+    assert is_chord_symbol("Esmaj7/G")
+    assert not is_chord_symbol("Bis")
